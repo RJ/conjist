@@ -1,6 +1,7 @@
+*.a
 build/*
-libqf2f
+conjist
 *.user
-Makefile
+Makefile*
 *.o
 moc_*
