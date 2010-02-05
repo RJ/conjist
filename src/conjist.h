@@ -10,6 +10,8 @@
 
 #include "jabberclient.h"
 #include "servent.h"
+#include "getopt_helper.h"
+#include "controlconnection.h"
 
 class conjist : public QCoreApplication
 {
@@ -27,14 +29,15 @@ private slots:
     void setup();
 
 private:
-    void startServent();
-
+    void startServent(bool upnp);
+    helper::GetOpt m_go;
     QString m_ourjid;
     JabberClient * m_jabber;
     Servent * m_servent;
-    int m_publicPort;
-    QHostAddress m_publicAddress;
+    int m_externalPort, m_port;
+    QHostAddress m_externalAddress;
     QJson::Parser parser;
+
 };
 
 #endif // CONJIST_H

@@ -50,8 +50,11 @@ public:
     void connectToPeer(QHostAddress ha, int port, Connection * conn, QString key);
     void reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey);
     void createDaapListener(ControlConnection * conn, QString key, QString name);
+
     void setExternalAddress(QHostAddress ha, int port);
     bool visibleExternally() const { return m_externalPort >0; };
+    QHostAddress externalAddress() const { return m_externalAddress; };
+    int externalPort() const { return m_externalPort; };
 
 protected:
     void incomingConnection(int sd);

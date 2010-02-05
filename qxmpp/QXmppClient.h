@@ -54,6 +54,7 @@ signals:
     void presenceReceived(const QXmppPresence&);
     void iqReceived(const QXmppIq&);
 
+
 public slots:
     void sendPacket(const QXmppPacket&);
 

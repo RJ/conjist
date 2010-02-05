@@ -22,7 +22,7 @@ void JabberClient::presenceReceived(QXmppPresence p)
         case QXmppPresence::Status::XA:
         case QXmppPresence::Status::DND:
         case QXmppPresence::Status::Chat:
-            qDebug() << "ONLINE presence: " << from << " type: " << p.getType();
+            //qDebug() << "ONLINE presence: " << from << " type: " << p.getType();
             if(from.contains("/conjist"))
             {
                 if(!m_peerjids.contains(from))
@@ -35,7 +35,7 @@ void JabberClient::presenceReceived(QXmppPresence p)
             break;
 
     default:
-            qDebug() << "OFFLINE pres: " << p.getFrom();
+            //qDebug() << "OFFLINE pres: " << p.getFrom();
             if(p.getFrom().contains("/conjist"))
             {
                 if(m_peerjids.contains(from))
@@ -52,7 +52,7 @@ void JabberClient::messageReceived(const QXmppMessage& message)
 {
     QString from = message.getFrom();
     QString msg = message.getBody();
-    qDebug() << "Jabber rcvded from: " << from << " msg: " << msg;
+    //qDebug() << "Jabber rcvded from: " << from << " msg: " << msg;
     if(m_peerjids.contains(from))
     {
         emit msgReceived(from, msg);
@@ -61,6 +61,6 @@ void JabberClient::messageReceived(const QXmppMessage& message)
 
 void JabberClient::sendMsg(QString to, QString msg)
 {
-    qDebug() << "Jabber sending to " << to << " msg: " << msg;
+    //qDebug() << "Jabber sending to " << to << " msg: " << msg;
     sendPacket(QXmppMessage("", to, msg));
 }

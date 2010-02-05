@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QStack>
 #include <stdlib.h>
+#include <QDebug>
 
 #include <assert.h>
 
@@ -158,7 +159,9 @@ void GetOpt::init( int argc, char *argv[], int offset )
 	aname = QFileInfo( QString::fromUtf8( argv[0] ) ).fileName();
 	// arguments
 	for ( int i = offset; i < argc; ++i )
+        {
 	    args.append( QString::fromUtf8( argv[i] ) );
+        }
     }
 }
 

@@ -91,3 +91,4 @@ QXmppRoster& QXmppClient::getRoster()
 {
     return m_stream->getRoster();
 }
+

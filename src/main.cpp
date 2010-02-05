@@ -4,17 +4,24 @@
 #include <QThread>
 #include <QTimer>
 #include <stdlib.h>
+#include <cstdlib> // for putenv
 
 //#include "servent.h"
 //#include "testdriver.h"
 //#include "proxyconnection.h"
 
 #include "conjist.h"
+#include "getopt_helper.h"
 
 int main(int argc, char *argv[])
 {
+    // silence the warnings from avahi
+    putenv("AVAHI_COMPAT_NOWARN=1");
+
     conjist app(argc, argv);
+
     return app.exec();
+
     /*
 
     QCoreApplication app(argc, argv);

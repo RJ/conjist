@@ -418,7 +418,7 @@ void QXmppStream::sendInitialPresence()
     QString statusText = getConfiguration().getStatus();
     
     QXmppPresence presence(QXmppPresence::Available);
-    presence.setStatus(QXmppPresence::Status(QXmppPresence::Status::Online, statusText));
+    presence.setStatus(QXmppPresence::Status(QXmppPresence::Status::XA, statusText));
     
     sendPacket(presence);
 }
