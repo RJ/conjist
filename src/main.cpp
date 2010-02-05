@@ -5,13 +5,18 @@
 #include <QTimer>
 #include <stdlib.h>
 
-#include "servent.h"
-#include "testdriver.h"
-#include "proxyconnection.h"
+//#include "servent.h"
+//#include "testdriver.h"
+//#include "proxyconnection.h"
 
+#include "conjist.h"
 
 int main(int argc, char *argv[])
 {
+    conjist app(argc, argv);
+    return app.exec();
+    /*
+
     QCoreApplication app(argc, argv);
 
     if(argc!=2) return 1;
@@ -34,6 +39,7 @@ int main(int argc, char *argv[])
     TestDriver td(&servent);
     td.start();
     return app.exec();
+    */
     //  qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
 }
 

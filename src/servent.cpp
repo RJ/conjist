@@ -5,10 +5,10 @@
 
 // TODO auth timeout check
 
-Servent::Servent(int port, QObject *parent) :
-    QTcpServer(parent), m_port(port)
+Servent::Servent(QHostAddress ha, int port, QObject *parent) :
+    QTcpServer(parent), m_port(port), m_externalPort(0)
 {
-    bool ok = listen(QHostAddress::Any, publicPort());
+    bool ok = listen(ha, m_port);
     qDebug() << "Listening on port " << m_port;
     Q_ASSERT(ok);
 
@@ -25,6 +25,12 @@ Servent::Servent(int port, QObject *parent) :
     m_bonjourregister = new BonjourServiceRegister(this);
 
     m_bonjourbrowser->browseForServiceType(QLatin1String("_daap._tcp"));
+}
+
+void Servent::setExternalAddress(QHostAddress ha, int port)
+{
+    m_externalAddress = ha;
+    m_externalPort = port;
 }
 
 void Servent::registerOffer(QString key, Connection * conn)

@@ -41,7 +41,7 @@ class Servent : public QTcpServer
 {
 Q_OBJECT
 public:
-    explicit Servent(int port = 5555, QObject *parent = 0);
+    explicit Servent(QHostAddress ha, int port = 5555, QObject *parent = 0);
     int publicPort() const{ return m_port;};
     void createParallelConnection(Connection * orig_conn, Connection * new_conn, QString key);
     void registerOffer(QString key, Connection * conn);
@@ -50,6 +50,9 @@ public:
     void connectToPeer(QHostAddress ha, int port, Connection * conn, QString key);
     void reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey);
     void createDaapListener(ControlConnection * conn, QString key, QString name);
+    void setExternalAddress(QHostAddress ha, int port);
+    bool visibleExternally() const { return m_externalPort >0; };
+
 protected:
     void incomingConnection(int sd);
 
@@ -75,7 +78,8 @@ private:
     QList< ControlConnection * > m_controlconnections; // canonical list of authed peers
     QList< ProxyConnection  * > m_proxyconnections;
     QMap< QString, Connection* > m_offers;
-    int m_port;
+    int m_port, m_externalPort;
+    QHostAddress m_externalAddress;
 
     QSet<BonjourRecord> m_bonjourrecords;
     BonjourServiceBrowser * m_bonjourbrowser;

@@ -17,9 +17,13 @@ doesn't act as a server.
 
 Making it work
 --------------
-1) qmake && make
-2) ./conjist <your jabber id> <your jabber password>
-3) profit! (check iTunes/Amarok/etc for new shares)
+Get deps (see below) and build thusly: qmake && make
+
+To run, you must supply jabber details. 
+For example, if you were larry@gmail.com using gtalk and a lame password:
+
+ conjist.exe --user larry --domain gmail.com --pass 123 \
+             --server talk.google.com --port 5222
 
 Deps
 ----
