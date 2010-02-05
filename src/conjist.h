@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QVariantMap>
 #include <QHostAddress>
+#include <QUuid>
 
 #include <qjson/parser.h>
 #include <qjson/serializer.h>
@@ -12,6 +13,8 @@
 #include "servent.h"
 #include "getopt_helper.h"
 #include "controlconnection.h"
+
+#include "cjuuid.h"
 
 class conjist : public QCoreApplication
 {

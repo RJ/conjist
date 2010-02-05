@@ -1,10 +1,9 @@
 TEMPLATE = app
 OBJECTS_DIR = ../build
 MOC_DIR = ../build
-QT += network xml
-
+QT += network \
+    xml
 TARGET = ../conjist
-
 HEADERS += servent.h \
     connection.h \
     controlconnection.h \
@@ -19,8 +18,8 @@ HEADERS += servent.h \
     conjist.h \
     jabberclient.h \
     portfwd.h \
-    getopt_helper.h
-
+    getopt_helper.h \
+    cjuuid.h
 SOURCES += servent.cpp \
     connection.cpp \
     main.cpp \
@@ -35,18 +34,14 @@ SOURCES += servent.cpp \
     jabberclient.cpp \
     portfwd.cpp \
     getopt_helper.cpp
-
 LIBPATH += ../qxmpp/
 LIBPATH += ../miniupnp/
-
 INCLUDEPATH += ../qxmpp/
 INCLUDEPATH += ../miniupnp/
-
 LIBS += -L/usr/local/lib \
     -lqjson \
     -lQXmppClient \
     -lminiupnp
-
 !mac:x11:LIBS += -ldns_sd
 win32:LIBS += -ldnssd
 

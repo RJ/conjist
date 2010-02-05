@@ -124,7 +124,7 @@ void Servent::readyRead()
             // use a copy, leave original there - offer can be reused.
             conn = conn->clone();
         }
-        conn->setName("Incoming-"+key);
+        //conn->setName("Incoming-"+key);
         conn->setPeerPort(pport);
         // hand over the socket
         sock->_disowned = true;
@@ -157,14 +157,8 @@ void Servent::createParallelConnection(Connection * orig_conn, Connection * new_
     }
     else // ask them to connect to us:
     {
-        QString tmpkey = "key-xxx"; // random, temp
+        QString tmpkey = uuid(); // random, temp
         m_offers[tmpkey] = new_conn;
-
-        // we need to tell peer to connect to us using this offer-key
-        //QVariantMap m;
-        //m["conntype"] = "request-offer";
-        //m["key"]      = key;
-        //m["port"]     = publicPort();
 
         orig_conn->sendMsg(QString("{ \"conntype\" : \"request-offer\", "
                                    "  \"key\" : \"%1\", "
@@ -226,7 +220,8 @@ void Servent::reverseOfferRequest(Connection * orig_conn, QString key, QString t
         return;
     }
     Connection * new_conn = m_offers[key];
-    new_conn->setName(key);
+    new_conn->setName(orig_conn->name() + "::parallel");
+    //new_conn->setName(key);
     // use a push-offer instead of default accept offer:
     QVariantMap m;
     m["conntype"] = "push-offer";
@@ -327,7 +322,7 @@ void Servent::unregisterProxyConnection()
 // debug stuff:
 
 
-
+/*
 
 
 void Servent::debug_handleLine(QString line)
@@ -393,14 +388,14 @@ void Servent::debug_connected()
     qDebug() << "Connnnnnected " << conn->id();
     conn->sendMsg(QByteArray("First post"));
 
-    /*
+
     qDebug() << "Trying to dupe this connection";
     ControlConnection * cc = new ControlConnection(this);
     cc->setName("dupeconn");
     connect(cc, SIGNAL(ready()), this, SLOT(debug_connected_dupe()));
     connect(cc, SIGNAL(failed()), this, SLOT(debug_failed()));
     createParallelConnection(conn, cc, "key2");
-    */
+
 }
 
 void Servent::debug_connected_dupe()
@@ -419,5 +414,5 @@ void Servent::debug_failed()
 }
 
 
-
+*/
 

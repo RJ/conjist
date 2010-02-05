@@ -18,7 +18,7 @@
 #include "zeroconf/bonjourserviceresolver.h"
 
 #include "connection.h"
-
+#include "cjuuid.h"
 
 
 
@@ -65,10 +65,10 @@ public slots:
     void socketError(QAbstractSocket::SocketError);
     void socketConnected();
 
-    void debug_handleLine(QString line);
-    void debug_failed();
-    void debug_connected();
-    void debug_connected_dupe();
+    //void debug_handleLine(QString line);
+    //void debug_failed();
+    //void debug_connected();
+    //void debug_connected_dupe();
 
 private slots:
     void readyRead();

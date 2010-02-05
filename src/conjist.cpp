@@ -1,14 +1,17 @@
+#include <QTime>
 #include "conjist.h"
 #include "portfwd.h"
 #include "getopt_helper.h"
 #include "QXmppLogger.h"
 #include "QXmppConfiguration.h"
 
+// default port, can be set using --listenport on command line
 #define CONJISTPORT 50210
 
 conjist::conjist(int argc, char *argv[])
     : QCoreApplication(argc, argv), m_go(argc,argv), m_servent(0), m_externalPort(0), m_port(CONJISTPORT)
 {
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime())); // for uuid generator
     // do the setup once event loop started, so we can call exit() correctly
     QTimer::singleShot(0, this, SLOT(setup()));
 }
@@ -123,7 +126,7 @@ void conjist::newJabberPeer(QString name)
     QVariantMap m;
     if(m_servent->visibleExternally())
     {
-        QString key = "blah-jabber-ofer-key";
+        QString key = uuid();
         ControlConnection * cc = new ControlConnection(m_servent);
         cc->setName(name);
         m_servent->registerOffer(key, cc);
