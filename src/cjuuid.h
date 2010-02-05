@@ -4,7 +4,7 @@
 inline static QString uuid()
 {
     QString q = QUuid::createUuid();
-    q.remove(0);
+    q.remove(0,1);
     q.chop(1);
     return q;
 }
