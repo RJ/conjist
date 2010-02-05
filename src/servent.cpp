@@ -283,7 +283,7 @@ void Servent::bonjourRecordResolved(const QHostInfo &host, int port)
     qDebug() << "bonjourRecordResolved: " << ha.toString() << " port: " << port;
 
     // offer to our peers:
-    QString key = "daap-offer-key-"+host.hostName();
+    QString key = uuid();
     ProxyConnection * proxc = new ProxyConnection(ha, port, this);
     proxc->setName(key);
     connect(proxc, SIGNAL(finished()), this, SLOT(unregisterProxyConnection()));
