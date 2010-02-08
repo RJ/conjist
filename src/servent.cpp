@@ -44,9 +44,9 @@ void Servent::registerControlConnection(ControlConnection * conn)
 {
     m_controlconnections.append(conn);
 
-    //if(conn->outbound())
-    //{
-        qDebug() << "Sending invite for library sharing";
+    if(!conn->outbound())
+    {
+        qDebug() << "Sending invite for library sharing...";
         QString key = uuid();
         Library * lib = ((conjist*)QCoreApplication::instance())->library();
         RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
@@ -59,7 +59,7 @@ void Servent::registerControlConnection(ControlConnection * conn)
         {
             cc->sendMsg(msg);
         }
-    //}
+    }
 
     /*
     foreach(ProxyConnection * pc, m_proxyconnections)
@@ -340,7 +340,6 @@ void Servent::createRemoteCollection(ControlConnection * conn, QString key, QStr
     Library * lib = ((conjist*)QCoreApplication::instance())->library();
     RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
     createParallelConnection(conn, rcconn, key);
-    RemoteCollection * rc = new RemoteCollection(this, rcconn);
     //ProxyListener * pl = new ProxyListener(this, conn, key);
     //BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),//conn->name()),
     //                  QLatin1String("_daap._tcp"), QString());

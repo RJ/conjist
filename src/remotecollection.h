@@ -9,6 +9,44 @@
 #include "servent.h"
 #include "library/library.h"
 #include "conjist.h"
+#include "httpd.h"
+class RemoteCollectionConnection;
+class RemoteCollection : public QDaap::Collection
+{
+Q_OBJECT
+public:
+    explicit RemoteCollection(Servent * s, RemoteCollectionConnection * conn);
+    ~RemoteCollection();
+    virtual QList<QDaap::Track> loadTracks();
+
+signals:
+
+public slots:
+    void connReady()
+    {
+        m_waitcond_ready.wakeAll();
+    };
+
+    void connAllTracks(QList<QDaap::Track> tracks)
+    {
+          m_tmp_tracks = tracks;
+          m_waitcond_all.wakeAll();
+    };
+
+private:
+    Servent * m_servent;
+    RemoteCollectionConnection * m_rcconn;
+
+    QMutex m_mut_ready, m_mut_all;
+    QWaitCondition m_waitcond_ready, m_waitcond_all;
+
+    QList<QDaap::Track> m_tmp_tracks;
+
+    Httpd * m_h;
+};
+
+
+
 
 class RemoteCollectionConnection : public Connection
 {
@@ -31,6 +69,7 @@ public:
 
     void setup()
     {
+        m_rc = new RemoteCollection(m_servent, this);
     };
 
     void handleMsg(QByteArray msg)
@@ -92,65 +131,9 @@ signals:
 private:
     Library * m_library;
     QJson::Parser parser;
+    RemoteCollection * m_rc;
 };
 
 
-class RemoteCollection : public QDaap::Collection
-{
-Q_OBJECT
-public:
-    explicit RemoteCollection(Servent * s, RemoteCollectionConnection * conn);
-
-    virtual QList<QDaap::Track> loadTracks()
-    {
-        // wait till connection is ready...
-        qDebug() << "Is RemoteCollectionConnection ready?";
-        if(!m_rcconn->isReady())
-        {
-            qDebug() << "Waiting.....";
-            connect(m_rcconn, SIGNAL(ready()), this, SLOT(connReady()));
-            m_mut_ready.lock();
-            m_waitcond_ready.wait(&m_mut_ready);
-            m_mut_ready.unlock();
-        }
-        qDebug() << "It's ready!";
-
-        // request all tracks:
-        QByteArray msg("ALLTRACKSREQUEST");
-        m_rcconn->sendMsg(msg);
-
-        // wait till all tracks are loaded
-        connect(m_rcconn, SIGNAL(allTracks(QList<QDaap::Track>)),
-                this,     SLOT(connAllTracks(QList<QDaap::Track>)));
-        m_mut_all.lock();
-        m_waitcond_all.wait(&m_mut_all);
-        m_mut_all.unlock();
-        qDebug() << "all tracks received";
-        return m_tmp_tracks;
-    };
-
-signals:
-
-public slots:
-    void connReady()
-    {
-        m_waitcond_ready.wakeAll();
-    };
-
-    void connAllTracks(QList<QDaap::Track> tracks)
-    {
-          m_tmp_tracks = tracks;
-          m_waitcond_all.wakeAll();
-    };
-
-private:
-    Servent * m_servent;
-    RemoteCollectionConnection * m_rcconn;
-
-    QMutex m_mut_ready, m_mut_all;
-    QWaitCondition m_waitcond_ready, m_waitcond_all;
-
-    QList<QDaap::Track> m_tmp_tracks;
-};
 
 #endif // REMOTECOLLECTION_H

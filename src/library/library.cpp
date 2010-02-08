@@ -6,7 +6,7 @@
    ./gen_schema.h.sh ./schema.sql library > library.sql.h
 */
 #include "library/library.sql.h"
-#define CURRENT_SCHEMA_VERSION 1
+#define CURRENT_SCHEMA_VERSION 2
 
 Library::Library(const QString &dbname, QObject *parent)
     : QObject(parent)
@@ -398,7 +398,7 @@ QList<QVariantMap> Library::artists()
 QList<QVariant> Library::allTracks()
 {
     QList<QVariant> tracks;
-    QString sql =   "SELECT file.id, artist.name, album.name, track.name, file.size, file.duration "
+    QString sql =   "SELECT file.id, artist.name, album.name, track.name, file.size, file.duration, "
                     "file.bitrate "
                     "FROM file, file_join, artist, album, track "
                     "WHERE file.id = file_join.file AND "
