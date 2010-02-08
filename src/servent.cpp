@@ -2,8 +2,8 @@
 #include "controlconnection.h"
 #include "proxylistener.h"
 #include "proxyconnection.h"
-
 #include "remotecollection.h"
+#include "remoteioconnection.h"
 
 // TODO auth timeout check
 
@@ -49,7 +49,7 @@ void Servent::registerControlConnection(ControlConnection * conn)
         qDebug() << "Sending invite for library sharing...";
         QString key = uuid();
         Library * lib = ((conjist*)QCoreApplication::instance())->library();
-        RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
+        RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, conn, this);
         rcconn->setName(conn->name());
         connect(rcconn, SIGNAL(ready()), this, SLOT(advertiseCollection()));
         connect(rcconn, SIGNAL(finished()), rcconn, SLOT(deleteLater()));
@@ -134,19 +134,29 @@ void Servent::readyRead()
     // the connected to us and want something we are offering
     if(conntype == "accept-offer" || "push-offer")
     {
-        if(!m_offers.contains(key))
+        Connection * conn;
+        if(key.startsWith("FILE_REQUEST_KEY:"))
+        {
+            int fid = key.right(key.length()-17).toInt();
+            qDebug() << "Got a request for fid: " << fid;
+            conn = new RemoteIOConnection(fid, this);
+        }
+        else if(!m_offers.contains(key))
         {
             qDebug() << "Invalid offer key on new connection";
             goto closeconnection;
         }
-        Connection * conn = m_offers[key];
-        if(conn->onceOnly())
+        else
         {
-            // just use this object
-            m_offers.remove(key);
-        } else {
-            // use a copy, leave original there - offer can be reused.
-            conn = conn->clone();
+            conn = m_offers[key];
+            if(conn->onceOnly())
+            {
+                // just use this object
+                m_offers.remove(key);
+            } else {
+                // use a copy, leave original there - offer can be reused.
+                conn = conn->clone();
+            }
         }
         //conn->setName("Incoming-"+key);
         conn->setPeerPort(pport);
@@ -341,7 +351,7 @@ void Servent::createRemoteCollection(ControlConnection * conn, QString key, QStr
     qDebug() << "Accepting an offer of a library from remote peer";
     Library * lib = ((conjist*)QCoreApplication::instance())->library();
 
-    RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
+    RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, conn, this);
     rcconn->setName(conn->name());
     connect(rcconn, SIGNAL(ready()), this, SLOT(advertiseCollection()));
     connect(rcconn, SIGNAL(finished()), rcconn, SLOT(deleteLater()));

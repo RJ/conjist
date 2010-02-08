@@ -1,5 +1,5 @@
 #include "remotecollection.h"
-//#include "httpd.h"
+#include "remoteioconnection.h"
 
 RemoteCollection::RemoteCollection(Servent * s, RemoteCollectionConnection * conn) :
         QDaap::Collection(conn->name(), conn), m_servent(s), m_rcconn(conn)
@@ -43,3 +43,16 @@ QList<QDaap::Track> RemoteCollection::loadTracks()
     qDebug() << "all tracks received";
     return m_tmp_tracks;
 }
+
+QIODevice * RemoteCollection::getTrack(quint32 id)
+{
+    if(!m_tracks.contains(id))
+    {
+        return 0;
+            //Q_ASSERT(false);
+    }
+    QDaap::Track t = m_tracks[id];
+    RemoteIOConnection * ioc = new RemoteIOConnection(t.id, m_servent);
+    m_servent->createParallelConnection(m_rcconn->cc(), ioc, QString("FILE_REQUEST_KEY:%1").arg(id));
+    return ioc->iodevice();
+};

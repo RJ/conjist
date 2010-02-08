@@ -20,13 +20,16 @@ HEADERS += servent.h \
     zeroconf/bonjourserviceresolver.h \
     library/library.h \
     library/scanner.h \
-    collection.h \
+    collection.h \ #qdaap
+    httpd.h \ #qdaap
     conjist.h \
     jabberclient.h \
     portfwd.h \
     getopt_helper.h \
     cjuuid.h \
-    remotecollection.h
+    remotecollection.h \
+    remotecollectionconnection.h \
+    remoteioconnection.h
 SOURCES += servent.cpp \
     connection.cpp \
     main.cpp \
@@ -43,7 +46,9 @@ SOURCES += servent.cpp \
     jabberclient.cpp \
     portfwd.cpp \
     getopt_helper.cpp \
-    remotecollection.cpp
+    remotecollection.cpp \
+    remotecollectionconnection.cpp \
+    remoteioconnection.cpp
 LIBPATH += ../qxmpp/
 LIBPATH += ../miniupnp/
 LIBPATH += ../qdaapd/

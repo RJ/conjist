@@ -41,6 +41,7 @@ public:
     QVariantMap artist(int id);
     QVariantMap album(int id);
     QVariantMap track(int id);
+    QVariantMap file(int fid);
 
 public slots:
     int addFile( QVariantMap m );

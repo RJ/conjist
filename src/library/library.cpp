@@ -76,6 +76,20 @@ void Library::addDir( const QString& url, int mtime)
     query.exec();
 }
 
+QVariantMap Library::file(int fid)
+{
+    QVariantMap m;
+    query.exec(QString("SELECT url, size FROM file WHERE id = ?").arg(fid));
+    if(query.next())
+    {
+        QString url = query.value(0).toString();
+        int size= query.value(2).toInt();
+        m["url"] = url;
+        m["size"] = size;
+    }
+    return m;
+}
+
 int  Library::addFile( QVariantMap m )
 {
 
