@@ -4,7 +4,7 @@
 RemoteCollection::RemoteCollection(Servent * s, RemoteCollectionConnection * conn) :
         QDaap::Collection(conn->name(), conn), m_servent(s), m_rcconn(conn)
 {
-    int port = (int)(qrand()*50000)/RAND_MAX;
+    int port = qrand() % 50000 + 10000;
     qDebug() << "CTOR RemoteCollection, listening on " << port;
     m_h = new Httpd(this, port);
 }
