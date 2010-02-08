@@ -33,6 +33,8 @@ public slots:
           m_waitcond_all.wakeAll();
     };
 
+    int port() const { return m_port; };
+
 private:
     Servent * m_servent;
     RemoteCollectionConnection * m_rcconn;
@@ -43,6 +45,7 @@ private:
     QList<QDaap::Track> m_tmp_tracks;
 
     Httpd * m_h;
+    int m_port;
 };
 
 
@@ -71,6 +74,8 @@ public:
     {
         m_rc = new RemoteCollection(m_servent, this);
     };
+
+    RemoteCollection * remoteCollection() const { return m_rc; };
 
     void handleMsg(QByteArray msg)
     {
@@ -111,7 +116,7 @@ public:
                     t.comment   = m.value("comment").toString();
                     t.extension = m.value("extension").toString();
                     t.bitrate   = m.value("bitrate").toInt();
-                    t.duration  = m.value("duration").toInt();
+                    t.duration  = m.value("duration").toInt() * 1000;
                     t.filesize  = m.value("filesize").toInt();
                     t.year      = m.value("year").toInt();
                     t.albumdiscnumber   = m.value("albumdiscnumber").toInt();

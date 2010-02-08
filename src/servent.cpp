@@ -50,6 +50,8 @@ void Servent::registerControlConnection(ControlConnection * conn)
         QString key = uuid();
         Library * lib = ((conjist*)QCoreApplication::instance())->library();
         RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
+        rcconn->setName(conn->name());
+        connect(rcconn, SIGNAL(ready()), this, SLOT(advertiseCollection()));
         connect(rcconn, SIGNAL(finished()), rcconn, SLOT(deleteLater()));
         registerOffer(key, rcconn);
         qDebug() << "Registered a RCConn using " << key;
@@ -329,7 +331,7 @@ void Servent::bonjourRecordResolved(const QHostInfo &host, int port)
 void Servent::createDaapListener(ControlConnection * conn, QString key, QString name)
 {
     ProxyListener * pl = new ProxyListener(this, conn, key);
-    BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),//conn->name()),
+    BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),
                       QLatin1String("_daap._tcp"), QString());
     m_bonjourregister->registerService(rec, pl->serverPort());
 }
@@ -338,12 +340,14 @@ void Servent::createRemoteCollection(ControlConnection * conn, QString key, QStr
 {
     qDebug() << "Accepting an offer of a library from remote peer";
     Library * lib = ((conjist*)QCoreApplication::instance())->library();
+
     RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
+    rcconn->setName(conn->name());
+    connect(rcconn, SIGNAL(ready()), this, SLOT(advertiseCollection()));
+    connect(rcconn, SIGNAL(finished()), rcconn, SLOT(deleteLater()));
     createParallelConnection(conn, rcconn, key);
-    //ProxyListener * pl = new ProxyListener(this, conn, key);
-    //BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),//conn->name()),
-    //                  QLatin1String("_daap._tcp"), QString());
-    //m_bonjourregister->registerService(rec, pl->serverPort());
+
+
 }
 
 void Servent::unregisterProxyConnection()
@@ -354,6 +358,15 @@ void Servent::unregisterProxyConnection()
 
 }
 
+void Servent::advertiseCollection()
+{
+    RemoteCollectionConnection * rcconn = (RemoteCollectionConnection*)sender();
+    RemoteCollection * rc = rcconn->remoteCollection();
+    // advertise this daap port:
+    BonjourRecord rec(QString("conjist:%1").arg(rcconn->name()),
+                      QLatin1String("_daap._tcp"), QString());
+    m_bonjourregister->registerService(rec, rc->port());
+}
 
 // debug stuff:
 

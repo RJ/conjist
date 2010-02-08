@@ -76,6 +76,7 @@ private slots:
     void updateBonjourRecords(const QList<BonjourRecord> &);
     void bonjourRecordResolved(const QHostInfo &, int);
     void unregisterProxyConnection();
+    void advertiseCollection();
 
 private:
     QJson::Parser parser;
