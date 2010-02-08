@@ -3,6 +3,8 @@
 #include "proxylistener.h"
 #include "proxyconnection.h"
 
+#include "remotecollection.h"
+
 // TODO auth timeout check
 
 Servent::Servent(QHostAddress ha, int port, QObject *parent) :
@@ -41,6 +43,25 @@ void Servent::registerOffer(QString key, Connection * conn)
 void Servent::registerControlConnection(ControlConnection * conn)
 {
     m_controlconnections.append(conn);
+
+    //if(conn->outbound())
+    //{
+        qDebug() << "Sending invite for library sharing";
+        QString key = uuid();
+        Library * lib = ((conjist*)QCoreApplication::instance())->library();
+        RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
+        connect(rcconn, SIGNAL(finished()), rcconn, SLOT(deleteLater()));
+        registerOffer(key, rcconn);
+        qDebug() << "Registered a RCConn using " << key;
+        QByteArray msg = QString("{\"method\":\"library-offer\", \"key\":\"%1\", \"name\":\"%2\"}")
+                         .arg(key).arg(key).toAscii();
+        foreach(ControlConnection * cc, m_controlconnections)
+        {
+            cc->sendMsg(msg);
+        }
+    //}
+
+    /*
     foreach(ProxyConnection * pc, m_proxyconnections)
     {
         qDebug() << "Advertising existing daap proxies to new peer";
@@ -48,6 +69,7 @@ void Servent::registerControlConnection(ControlConnection * conn)
                         .arg(pc->name()).arg(pc->name()).toAscii();
         conn->sendMsg(msg);
     }
+    */
 }
 
 void Servent::unregisterControlConnection(ControlConnection * conn)
@@ -283,6 +305,7 @@ void Servent::bonjourRecordResolved(const QHostInfo &host, int port)
     qDebug() << "bonjourRecordResolved: " << ha.toString() << " port: " << port;
 
     // offer to our peers:
+    /*
     QString key = uuid();
     ProxyConnection * proxc = new ProxyConnection(ha, port, this);
     proxc->setName(key);
@@ -299,6 +322,7 @@ void Servent::bonjourRecordResolved(const QHostInfo &host, int port)
     {
         cc->sendMsg(msg);
     }
+    */
 
 }
 
@@ -308,6 +332,19 @@ void Servent::createDaapListener(ControlConnection * conn, QString key, QString 
     BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),//conn->name()),
                       QLatin1String("_daap._tcp"), QString());
     m_bonjourregister->registerService(rec, pl->serverPort());
+}
+
+void Servent::createRemoteCollection(ControlConnection * conn, QString key, QString name)
+{
+    qDebug() << "Accepting an offer of a library from remote peer";
+    Library * lib = ((conjist*)QCoreApplication::instance())->library();
+    RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, this);
+    createParallelConnection(conn, rcconn, key);
+    RemoteCollection * rc = new RemoteCollection(this, rcconn);
+    //ProxyListener * pl = new ProxyListener(this, conn, key);
+    //BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),//conn->name()),
+    //                  QLatin1String("_daap._tcp"), QString());
+    //m_bonjourregister->registerService(rec, pl->serverPort());
 }
 
 void Servent::unregisterProxyConnection()

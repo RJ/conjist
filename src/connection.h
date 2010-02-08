@@ -54,6 +54,8 @@ public:
     void setOnceOnly(bool b){ m_onceonly = b; };
     bool onceOnly() const { return m_onceonly; };
 
+    bool isReady() const { return m_ready; } ;
+
 protected:
     virtual void handleMsg(QByteArray msg);
     virtual void setup(){};

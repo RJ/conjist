@@ -1,4 +1,4 @@
-#include "portfwd/portfwd.h"
+#include "portfwd.h"
 #include "miniwget.h"
 #include "miniupnpc.h"
 #include "upnpcommands.h"

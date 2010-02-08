@@ -18,6 +18,8 @@ conjist::conjist(int argc, char *argv[])
 
 void conjist::setup()
 {
+    setupLibrary();
+
     QString domain, username, password, server, sport, slport;
     int jport;
     bool noupnp, xmpplog;
@@ -74,6 +76,17 @@ void conjist::setup()
     startServent(!noupnp);
 }
 
+void conjist::setupLibrary()
+{
+    QString dbname = "./library.sqlite";
+    m_library = new Library(dbname, this);
+    if(!QFile(dbname).exists())
+    {
+        m_scanner = new MusicScanner("/mnt/redbeard/media/music");
+        connect(m_scanner,SIGNAL(fileScanned(QVariantMap)), m_library, SLOT(addFile(QVariantMap)),Qt::QueuedConnection);
+        m_scanner->start();
+    }
+}
 
 // figure out ports, external ips, and start the servent listening
 void conjist::startServent(bool upnp)

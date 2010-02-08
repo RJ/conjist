@@ -50,6 +50,7 @@ public:
     void connectToPeer(QHostAddress ha, int port, Connection * conn, QString key);
     void reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey);
     void createDaapListener(ControlConnection * conn, QString key, QString name);
+    void createRemoteCollection(ControlConnection * conn, QString key, QString name);
 
     void setExternalAddress(QHostAddress ha, int port);
     bool visibleExternally() const { return m_externalPort >0; };

@@ -2,7 +2,10 @@ TEMPLATE = app
 OBJECTS_DIR = ../build
 MOC_DIR = ../build
 QT += network \
-    xml
+    xml \
+    sql
+QT -= gui
+CONFIG -= app_bundle
 TARGET = ../conjist
 HEADERS += servent.h \
     connection.h \
@@ -15,11 +18,15 @@ HEADERS += servent.h \
     zeroconf/bonjourservicebrowser.h \
     zeroconf/bonjourserviceregister.h \
     zeroconf/bonjourserviceresolver.h \
+    library/library.h \
+    library/scanner.h \
+    collection.h \
     conjist.h \
     jabberclient.h \
     portfwd.h \
     getopt_helper.h \
-    cjuuid.h
+    cjuuid.h \
+    remotecollection.h
 SOURCES += servent.cpp \
     connection.cpp \
     main.cpp \
@@ -30,22 +37,34 @@ SOURCES += servent.cpp \
     zeroconf/bonjourservicebrowser.cpp \
     zeroconf/bonjourserviceregister.cpp \
     zeroconf/bonjourserviceresolver.cpp \
+    library/library.cpp \
+    library/scanner.cpp \
     conjist.cpp \
     jabberclient.cpp \
     portfwd.cpp \
-    getopt_helper.cpp
+    getopt_helper.cpp \
+    remotecollection.cpp
 LIBPATH += ../qxmpp/
 LIBPATH += ../miniupnp/
+LIBPATH += ../qdaapd/
 INCLUDEPATH += ../qxmpp/
 INCLUDEPATH += ../miniupnp/
+INCLUDEPATH += ../qdaapd/
+INCLUDEPATH += ../qdaapd/daaplib/include/
+INCLUDEPATH += /usr/include/taglib/
 LIBS += -L/usr/local/lib \
     -lqjson \
     -lQXmppClient \
-    -lminiupnp
-!mac:x11:LIBS += -ldns_sd
-win32:LIBS += -ldnssd
+    -lminiupnp \
+    -ltag \
+    -lqdaapd
 
+# don't link to dnssd on OSX (un tested qmake incantation)
+# !macx{
+# LIBS += -ldnssd
+# }
 # Add your path to bonjour here.
 # LIBPATH=C:/...
 # INCLUDEPATH += c:/...
-unix:LIBS += -ldns_sd
+# unix:LIBS += -ldns_sd
+LIBS += -ldns_sd

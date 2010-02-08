@@ -45,6 +45,12 @@ void ControlConnection::handleMsg(QByteArray msg)
             QString name= m["name"].toString();
             m_servent->createDaapListener(this, key, name);
         }
+        else if(m.value("method").toString() == "library-offer")
+        {
+            QString key = m["key"].toString();
+            QString name= m["name"].toString();
+            m_servent->createRemoteCollection(this, key, name);
+        }
 
         return;
     }
