@@ -3,13 +3,13 @@
 Connection::Connection(Servent *parent)
     : m_peerport(0), m_bs(0), m_servent(parent), m_ready(false), m_onceonly(true)
 {
-    qDebug() << "CTOR Connection";
+    qDebug() << "CTOR Connection (super)";
     //moveToThread(this);
 }
 
 Connection::~Connection()
 {
-    qDebug() << "DTOR connection " << id();
+    qDebug() << "DTOR connection (super) " << id();
     m_sock->deleteLater();
 }
 

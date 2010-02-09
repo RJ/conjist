@@ -9,7 +9,9 @@ RemoteCollection::RemoteCollection(Servent * s, RemoteCollectionConnection * con
 
     m_port = qrand() % 50000 + 10000; //TODO
     qDebug() << "CTOR RemoteCollection, listening on " << m_port;
-    m_h = new Httpd(this, m_port);
+    QDaapdThread * t = new QDaapdThread(this, m_port);
+    t->start();
+    //m_h = new Httpd(this, m_port);
 }
 
 RemoteCollection::~RemoteCollection()

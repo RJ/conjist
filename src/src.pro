@@ -29,7 +29,8 @@ HEADERS += servent.h \
     cjuuid.h \
     remotecollection.h \
     remotecollectionconnection.h \
-    remoteioconnection.h
+    remoteioconnection.h \
+    remoteiodevice.h
 SOURCES += servent.cpp \
     connection.cpp \
     main.cpp \

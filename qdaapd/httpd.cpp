@@ -73,9 +73,10 @@ void Httpd::handleRequest(struct mg_connection * conn, const struct mg_request_i
         qDebug() << "Serving file id " << fid << " with extension " << ext;
 
         QIODevice * dev = m_coll->getTrack(fid);
-        if(!dev) // || !dev->isOpen())
+        if(true || !dev) // || !dev->isOpen())
         {
             mg_printf(conn, "HTTP/1.0 503 Some error\r\n\r\n<H1>503 error</H1>");
+            return;
         }
         else
         {

@@ -5,6 +5,8 @@
 #include <QString>
 #include <QRegExp>
 #include <QStringList>
+#include <QThread>
+#include <QTimer>
 
 #ifdef _WIN32
 #include <winsock.h>
@@ -88,6 +90,38 @@ static void mongoose_handler(struct mg_connection * conn,
     Httpd * httpd = (Httpd*)user_data;
     httpd->handleRequest(conn, request_info);
 }
+
+
+
+class QDaapdThread : public QThread
+{
+    Q_OBJECT
+public:
+
+    QDaapdThread(QDaap::Collection *c, quint16 p)
+        : m_c(c), m_p(p)
+    {
+        moveToThread(this);
+    };
+
+    void run()
+    {
+        QTimer::singleShot(0, this, SLOT(startServer()));
+        exec();
+    };
+
+private slots:
+    void startServer()
+    {
+        m_h = new Httpd(m_c, m_p);
+    };
+
+private:
+    QDaap::Collection * m_c;
+    quint16 m_p;
+    Httpd * m_h;
+};
+
 
 
 #endif // HTTPD_H
