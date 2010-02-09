@@ -2,4 +2,4 @@ TEMPLATE = subdirs
 OBJECTS_DIR = build
 MOC_DIR = build
 
-SUBDIRS = qxmpp miniupnp src
+SUBDIRS = qxmpp miniupnp qdaapd src

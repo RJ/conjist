@@ -67,7 +67,7 @@ public:
                     t.album     = m.value("album").toString();
                     t.track     = m.value("track").toString();
                     t.comment   = m.value("comment").toString();
-                    t.extension = m.value("extension").toString();
+                    t.extension = "mp3";//m.value("extension").toString();
                     t.bitrate   = m.value("bitrate").toInt();
                     t.duration  = m.value("duration").toInt() * 1000;
                     t.filesize  = m.value("filesize").toInt();

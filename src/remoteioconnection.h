@@ -21,7 +21,13 @@ public:
     // abuse this to only block until headers are available:
     bool waitForReadyRead ( int msecs )
     {
-        if(!m_headers) m_wait.wait(&m_mut);
+        if(!m_headers)
+        {
+            qDebug() << "RemoteIODevice::waitForReadyRead";
+            m_wait.wait(&m_mut);
+        }else
+            qDebug() << "RemoteIODevice - no waiting required";
+
         return true;
     }
 
@@ -33,9 +39,15 @@ public:
     qint64 readData ( char * data, qint64 maxSize )
     {
         m_mut_recv.lock();
-        if(m_eof && m_buffer.length() == 0) return 0;
+        if(m_eof && m_buffer.length() == 0)
+        {
+            // eof
+            m_mut_recv.unlock();
+            return 0;
+        }
         if(!m_buffer.length())
         {
+            // wait for more data to arrive
             m_mut_recv.unlock();
             m_wait.wait(&m_mut);
             m_mut_recv.lock();

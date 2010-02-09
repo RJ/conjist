@@ -21,26 +21,17 @@ Q_OBJECT
 public:
     explicit RemoteCollection(Servent * s, RemoteCollectionConnection * conn);
     ~RemoteCollection();
-    virtual QList<QDaap::Track> loadTracks();
+    virtual void loadTracks();
 
 signals:
 
 public slots:
-    void connReady()
-    {
-        m_waitcond_ready.wakeAll();
-    };
 
-    void connAllTracks(QList<QDaap::Track> tracks)
-    {
-          m_tmp_tracks = tracks;
-          m_waitcond_all.wakeAll();
-    };
+    void connAllTracks(QList<QDaap::Track> tracks);
 
     int port() const { return m_port; };
 
     QIODevice * getTrack(quint32 id);
-
 
 private:
     Servent * m_servent;
@@ -49,7 +40,7 @@ private:
     QMutex m_mut_ready, m_mut_all;
     QWaitCondition m_waitcond_ready, m_waitcond_all;
 
-    QList<QDaap::Track> m_tmp_tracks;
+    //QList<QDaap::Track> m_tmp_tracks;
 
     Httpd * m_h;
     int m_port;

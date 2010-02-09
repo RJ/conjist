@@ -3,7 +3,7 @@
 
 #include "getopt_helper.h"
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QFileInfo>
 #include <QStack>
 #include <stdlib.h>
