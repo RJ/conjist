@@ -32,22 +32,6 @@ public:
 
     void handleMsg(QByteArray msg)
     {
-        if(msg == "ALLTRACKSREQUEST")
-        {
-            // send all tracks
-            QVariantList /*QList<QVariantMap>*/ all = m_library->allTracks();
-            qDebug() << "Sending our library of " << all.length() << " tracks...";
-
-            QVariantMap response;
-            response["method"] = "alltracks";
-            response["tracks"] = all;
-
-            QJson::Serializer serializer;
-            const QByteArray serialized = serializer.serialize( response );
-            sendMsg(serialized);
-            return;
-        }
-
         bool ok;
         QVariantMap m = parser.parse(msg, &ok).toMap();
         if(ok)
