@@ -17,6 +17,7 @@ void Connection::setFirstMessage(QVariantMap m)
 {
     QJson::Serializer serializer;
     m_firstmsg = serializer.serialize( m );
+    qDebug() << id() << " first msg set to " << QString::fromAscii(m_firstmsg);
 }
 
 void Connection::shutdown()
@@ -99,7 +100,7 @@ void Connection::readyRead()
     }
     QByteArray ba = m_sock->read(m_bs);
     m_bs = 0;    
-    //qDebug() << "Connection::readyRead() RCVD ("<< ba.length() << ") : " << QString::fromAscii(ba);
+    //////qDebug() << "Connection::readyRead() RCVD ("<< ba.length() << ") : " << QString::fromAscii(ba);
 
     if(outbound() == false && QString::fromAscii(ba) == "{ \"ready2\" : true }")
     {
@@ -129,7 +130,7 @@ void Connection::sendMsg(QByteArray msg)
         qDebug() << "Can't send, socket not open";
         return;
     }
-    if(msg.at(0)=='{') qDebug() << id() << "SENDING: " << QString::fromAscii(msg);
+    //////if(msg.at(0)=='{') qDebug() << id() << "SENDING: " << QString::fromAscii(msg);
     quint32 size = qToBigEndian(msg.length());
     m_sock->write((const char*)&size, sizeof(quint32));
     m_sock->write(msg);

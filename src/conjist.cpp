@@ -21,8 +21,9 @@ void conjist::setup()
     setupLibrary();
 
     QString domain, username, password, server, sport, slport;
+    QString peerip, peerkey, peerportS, regkey, scandir;
     int jport;
-    bool noupnp, xmpplog;
+    bool noupnp, xmpplog, noxmpp;
     m_go.addOption('d', "domain", &domain);
     m_go.addOption('u', "user", &username);
     m_go.addOption('p', "pass", &password);
@@ -31,9 +32,18 @@ void conjist::setup()
     m_go.addOption('l', "listenport", &slport);
     m_go.addSwitch("noupnp", &noupnp);
     m_go.addSwitch("xmpplog", &xmpplog);
+    m_go.addSwitch("noxmpp", &noxmpp);
+
+    m_go.addOption('1', "peerip", &peerip);
+    m_go.addOption('2', "peerport", &peerportS);
+    m_go.addOption('3', "peerkey", &peerkey);
+    m_go.addOption('4', "regkey", &regkey);
+    m_go.addOption('5', "rescan", &scandir);
 
     bool ok = m_go.parse();
-    if(!ok || username=="" || password=="" || domain=="")
+
+
+    if(!ok || (!noxmpp && (username=="" || password=="" || domain=="")))
     {
         printf("You must supply your jabber details.\n");
         printf("For example, if you were larry@gmail.com using gtalk:\n");
@@ -44,48 +54,68 @@ void conjist::setup()
         this->exit(1);
         return;
     }
-    jport = sport.toInt();
-    if(!jport) jport=5222;
 
     m_port = slport.toInt();
     if(!m_port) m_port = CONJISTPORT;
 
-    if(server.isNull()) server = domain;
+    if(scandir.length())
+    {
+        m_scanner = new MusicScanner(scandir);
+        connect(m_scanner,SIGNAL(fileScanned(QVariantMap)), m_library, SLOT(addFile(QVariantMap)),Qt::QueuedConnection);
+        m_scanner->start();
+    }
 
-    // jabber client setup
+    if(!noxmpp)
+    {
+        jport = sport.toInt();
+        if(!jport) jport=5222;
 
-    if(xmpplog) QXmppLogger::getLogger()->setLoggingType(QXmppLogger::STDOUT);
-    else        QXmppLogger::getLogger()->setLoggingType(QXmppLogger::NONE);
+        if(server.isNull()) server = domain;
 
-    m_jabber = new JabberClient(this);
-    connect(m_jabber, SIGNAL(peerOnline(QString)), this, SLOT(newJabberPeer(QString)));
-    connect(m_jabber, SIGNAL(msgReceived(QString,QString)), this, SLOT(jabberMsg(QString,QString)));
+        // jabber client setup
 
-    m_ourjid = QString("%1@%2").arg(username).arg(domain);
-    QXmppConfiguration conf;
-    conf.setHost(server);
-    conf.setDomain(domain);
-    conf.setUser(username);
-    conf.setPasswd(password);
-    conf.setPort(jport);
-    conf.setResource("conjist");
-    conf.setStatus("conjist software (not human)");
+        if(xmpplog) QXmppLogger::getLogger()->setLoggingType(QXmppLogger::STDOUT);
+        else        QXmppLogger::getLogger()->setLoggingType(QXmppLogger::NONE);
 
-    m_jabber->connectToServer( conf );
+        m_jabber = new JabberClient(this);
+        connect(m_jabber, SIGNAL(peerOnline(QString)), this, SLOT(newJabberPeer(QString)));
+        connect(m_jabber, SIGNAL(msgReceived(QString,QString)), this, SLOT(jabberMsg(QString,QString)));
+
+        m_ourjid = QString("%1@%2").arg(username).arg(domain);
+        QXmppConfiguration conf;
+        conf.setHost(server);
+        conf.setDomain(domain);
+        conf.setUser(username);
+        conf.setPasswd(password);
+        conf.setPort(jport);
+        conf.setResource("conjist");
+        conf.setStatus("conjist software (not human)");
+
+        m_jabber->connectToServer( conf );
+    }
 
     startServent(!noupnp);
+
+    if(regkey.length())
+    {
+        qDebug() << "Registering key: " << regkey;
+        ControlConnection * cc = new ControlConnection(m_servent);
+        cc->setName("DEBUG(manual key)");
+        m_servent->registerOffer(regkey, cc);
+    }
+
+    if(peerip.length() && peerportS.length() && peerkey.length())
+    {
+        ControlConnection * cc = new ControlConnection(m_servent);
+        cc->setName(peerip);
+        m_servent->connectToPeer(QHostAddress(peerip), peerportS.toInt(), cc, peerkey);
+    }
 }
 
 void conjist::setupLibrary()
 {
     QString dbname = "./library.sqlite";
-    m_library = new Library(dbname, this);
-    if(!QFile(dbname).exists())
-    {
-        m_scanner = new MusicScanner("/mnt/redbeard/media/music");
-        connect(m_scanner,SIGNAL(fileScanned(QVariantMap)), m_library, SLOT(addFile(QVariantMap)),Qt::QueuedConnection);
-        m_scanner->start();
-    }
+    m_library = new Library(dbname, this);  
 }
 
 // figure out ports, external ips, and start the servent listening
@@ -135,7 +165,7 @@ nopublic:
 void conjist::newJabberPeer(QString name)
 {
     if(name.startsWith(m_ourjid)) return;
-
+    qDebug() << "newJabberPeer : " << name;
     QVariantMap m;
     if(m_servent->visibleExternally())
     {

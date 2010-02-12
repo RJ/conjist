@@ -20,6 +20,7 @@ public:
     ~RemoteCollectionConnection()
     {
         qDebug() << "DTOR " << id();
+        m_servent->unregisterRemoteCollectionConnection(this);
     };
 
     QString id() const { return "RemoteCollectionConnection::" + name(); };
@@ -72,6 +73,10 @@ public:
 
 signals:
     void allTracks(QList<QDaap::Track>);
+
+private slots:
+    void doRegister();
+
 private:
     Library * m_library;
     QJson::Parser parser;

@@ -20,12 +20,13 @@
 #include "connection.h"
 #include "cjuuid.h"
 
-
+#include "qdaapd/qdaapd.h"
 
 class Connection;
 class Connector;
 class ControlConnection;
 class ProxyConnection;
+class RemoteCollectionConnection;
 
 class QTcpSocketExtra : public QTcpSocket
 {
@@ -45,8 +46,13 @@ public:
     int publicPort() const{ return m_port;};
     void createParallelConnection(Connection * orig_conn, Connection * new_conn, QString key);
     void registerOffer(QString key, Connection * conn);
+
     void registerControlConnection(ControlConnection * conn);
     void unregisterControlConnection(ControlConnection * conn);
+
+    void registerRemoteCollectionConnection(RemoteCollectionConnection * conn);
+    void unregisterRemoteCollectionConnection(RemoteCollectionConnection * conn);
+
     void connectToPeer(QHostAddress ha, int port, Connection * conn, QString key);
     void reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey);
     void createDaapListener(ControlConnection * conn, QString key, QString name);
@@ -78,9 +84,12 @@ private slots:
     void unregisterProxyConnection();
     void advertiseCollection();
 
+    void testRR();
+
 private:
     QJson::Parser parser;
     QList< ControlConnection * > m_controlconnections; // canonical list of authed peers
+    QList< RemoteCollectionConnection * > m_remotecollectionconnections; // canonical list of authed peers
     QList< ProxyConnection  * > m_proxyconnections;
     QMap< QString, Connection* > m_offers;
     int m_port, m_externalPort;
@@ -93,5 +102,61 @@ private:
 };
 
 
+
+class Reader : public QObject
+{
+Q_OBJECT
+public:
+    QMutex mut;
+    QWaitCondition wait;
+    QIODevice * dev;
+    Reader(QIODevice * d) : dev(d)
+    {
+        connect(dev, SIGNAL(readyRead()), this, SLOT(doread()));
+    };
+
+    void waitUntilFinished()
+    {
+        mut.lock();
+        wait.wait(&mut);
+        mut.unlock();
+    };
+
+private slots:
+    void doread()
+    {
+
+        if(dev->bytesAvailable()>0)
+        {
+            QByteArray ba = dev->readAll();
+            qDebug() << "READYREAD: Read " << ba.length() << " bytes";
+        }
+        if(dev->atEnd())
+        {
+            qDebug() << "REader thread ending, eof";
+            wait.wakeAll();
+            return;
+        }
+    }
+};
+
+#include <QThread>
+
+class ReaderThread : public QThread
+{
+    Q_OBJECT
+public:
+    QIODevice * dev;
+    ReaderThread(QIODevice * d)
+    {
+        dev = d;
+    };
+    void run()
+    {
+      Reader r(dev);
+      r.waitUntilFinished();
+      qDebug() << "ReaderThread ends";
+    };
+};
 
 #endif // SERVENT_H

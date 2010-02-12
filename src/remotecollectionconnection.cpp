@@ -4,6 +4,7 @@
 void RemoteCollectionConnection::setup()
 {
     m_rc = new RemoteCollection(m_servent, this);
+    connect(m_rc, SIGNAL(finishedLoading()), this, SLOT(doRegister()));
 
     // send all tracks TODO use a LibraryCollection for this
     // so that in future, we could reproxy easily
@@ -18,4 +19,10 @@ void RemoteCollectionConnection::setup()
     const QByteArray serialized = serializer.serialize( response );
     qDebug() << "Sending full tracklist, size: " << serialized.length();
     sendMsg(serialized);
+}
+
+void RemoteCollectionConnection::doRegister()
+{
+    //RemoteCollection * rc = (RemoteCollection*)sender();
+    m_servent->registerRemoteCollectionConnection(this);
 }

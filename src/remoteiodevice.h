@@ -4,49 +4,98 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QDebug>
+#include <QBuffer>
+//#include <QMutexLocker>
+
 class RemoteIODevice : public QIODevice
 {
     Q_OBJECT
 public:
 
     RemoteIODevice() :
-            m_eof(false), m_headers(false), m_filesize(0)
+            m_eof(false)
     {};
 
-    // abuse this to only block until headers are available:
-    bool waitForReadyRead ( int msecs )
+    virtual bool open ( OpenMode mode )
     {
-        if(!m_headers)
-        {
-            qDebug() << "RemoteIODevice::waitForReadyRead";
-            m_wait.wait(&m_mut);
-        }else
-            qDebug() << "RemoteIODevice - no waiting required";
-
-        return true;
+        return QIODevice::open(mode & QIODevice::ReadOnly);// & QIODevice::Unbuffered);
     }
 
-    qint64 size () const
+    qint64 bytesAvailable () const
     {
-        return m_filesize;
+        return m_buffer.length();
     };
 
-    qint64 readData ( char * data, qint64 maxSize )
+    virtual bool isSequential () const { return true; };
+
+    virtual bool waitForReadyRead(int msecs)
     {
-        qDebug() << "RemIO::readData";
+
+        qDebug() << "GOTLOCK";
+        m_mut_wait.lock();
+        if(m_buffer.length() == 0)
+        {
+            qDebug() << "WAITING (in thread " << this->thread() << ")";
+            m_wait.wait(&m_mut_wait);
+        }
+        m_mut_wait.unlock();
+        qDebug() << "UNLOCKED";
+        return true;
+    };
+
+    virtual bool atEnd() const { return m_eof && m_buffer.length() == 0; };
+
+public slots:
+
+    void addData(QByteArray msg)
+    {
+        qDebug() << "RemIO::addData (trying..)";
+        m_mut_recv.lock();
+        qDebug() << "RemIO::addData (got lock) numbytes:" << msg.length();
+        if(msg.length()==0)
+        {
+            m_eof=true;
+            qDebug() << "addData finished, entire file received. EOF.";
+            m_mut_recv.unlock();
+            m_wait.wakeAll();
+            return;
+        }
+        else
+        {
+            m_buffer.append(msg);
+            m_mut_recv.unlock();
+            qDebug() << "WAKE ALL - just added bytes to dev: " << msg.length();
+            //emit bytesWritten(msg.length());
+            m_wait.wakeAll();
+            emit readyRead();
+            return;
+        }
+    }
+
+protected:
+
+    virtual qint64 writeData ( const char * data, qint64 maxSize )
+    {
+        Q_ASSERT(false);
+        return 0;
+    };
+
+    virtual qint64 readData ( char * data, qint64 maxSize )
+    {
+        qDebug() << "RemIO::readData, bytes in buffer: " << m_buffer.length();
         m_mut_recv.lock();
         if(m_eof && m_buffer.length() == 0)
         {
             // eof
+            qDebug() << "readData called when EOF";
             m_mut_recv.unlock();
             return 0;
         }
-        if(!m_buffer.length())
+        if(!m_buffer.length())// return 0;
         {
-            // wait for more data to arrive
+            qDebug() << "WARNING readData when buffer is empty";
             m_mut_recv.unlock();
-            m_wait.wait(&m_mut);
-            m_mut_recv.lock();
+            return 0;
         }
         int len;
         if(maxSize>=m_buffer.length()) // whole buffer
@@ -63,38 +112,10 @@ public:
         return len;
     };
 
-    qint64 writeData ( const char * data, qint64 maxSize )
-    {
-        Q_ASSERT(false);
-        return 0;
-    };
-
-    void addData(QByteArray msg)
-    {
-        qDebug() << "RemIO::addData";
-        m_mut_recv.lock();
-        if(msg.length()==0) m_eof=true;
-        else
-        {
-            if(!m_headers)
-            {
-                m_filesize = QString::fromAscii(msg).toInt();
-                m_headers = true;
-                qDebug() << "RemIODev, filesize: " << m_filesize;
-            }
-            else m_buffer.append(msg);
-        }
-        m_mut_recv.unlock();
-        m_wait.wakeAll();
-        qDebug() << "just read: " << msg.length();
-        //emit QIODevice::readyRead();
-    }
-
 private:
     QByteArray m_buffer;
-    QMutex m_mut, m_mut_recv;
+    QMutex m_mut_wait, m_mut_recv;
     QWaitCondition m_wait;
-    bool m_eof, m_headers;
-    int m_filesize;
+    bool m_eof;
 };
 #endif // REMOTEIODEVICE_H

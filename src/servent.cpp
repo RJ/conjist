@@ -4,6 +4,9 @@
 #include "proxyconnection.h"
 #include "remotecollection.h"
 #include "remoteioconnection.h"
+#include "remotecollectionconnection.h"
+
+
 
 // TODO auth timeout check
 
@@ -11,7 +14,7 @@ Servent::Servent(QHostAddress ha, int port, QObject *parent) :
     QTcpServer(parent), m_port(port), m_externalPort(0)
 {
     bool ok = listen(ha, m_port);
-    qDebug() << "Listening on port " << m_port;
+    qDebug() << "Listening on port " << m_port << " thread: " << this->thread();
     Q_ASSERT(ok);
 
     // bonjour setup:
@@ -40,6 +43,33 @@ void Servent::registerOffer(QString key, Connection * conn)
     m_offers[key] = conn;
 }
 
+void Servent::registerRemoteCollectionConnection(RemoteCollectionConnection * conn)
+{
+    m_remotecollectionconnections.append(conn);
+
+    int port = qrand() % 50000 + 10000; //TODO
+
+    qDebug() << "RemoteCollection registered: " << conn->name() << " numtracks: " << conn->remoteCollection()->numTracks()
+             << ", listening and advertising on DAAP PORT " << port;
+
+
+    if(!conn->outbound()) return;
+
+    new QDaap::QDAAPd(conn->remoteCollection(), port);
+    // advertise this daap port:
+    BonjourRecord rec(QString("conjist:%1").arg(conn->name()),
+                      QLatin1String("_daap._tcp"), QString());
+    m_bonjourregister->registerService(rec, port);
+
+}
+
+void Servent::unregisterRemoteCollectionConnection(RemoteCollectionConnection * conn)
+{
+    QList<RemoteCollectionConnection*> n;
+    foreach(RemoteCollectionConnection * c, m_remotecollectionconnections) if(c!=conn) n.append(c);
+    m_remotecollectionconnections = n;
+}
+
 void Servent::registerControlConnection(ControlConnection * conn)
 {
     m_controlconnections.append(conn);
@@ -51,7 +81,7 @@ void Servent::registerControlConnection(ControlConnection * conn)
         Library * lib = ((conjist*)QCoreApplication::instance())->library();
         RemoteCollectionConnection * rcconn = new RemoteCollectionConnection(lib, conn, this);
         rcconn->setName(conn->name());
-        connect(rcconn, SIGNAL(ready()), this, SLOT(advertiseCollection()));
+        //connect(rcconn, SIGNAL(ready()), this, SLOT(advertiseCollection()));
         connect(rcconn, SIGNAL(finished()), rcconn, SLOT(deleteLater()));
         registerOffer(key, rcconn);
         qDebug() << "Registered a RCConn using " << key;
@@ -63,6 +93,21 @@ void Servent::registerControlConnection(ControlConnection * conn)
         }
     }
 
+
+    if(conn->outbound())
+    {
+        // TESTING: init a file transfer
+        //qDebug() << "Init a file transfer as a test:";
+        //QIODevice * dev = m_coll->getTrackIODevice(1);
+        /*
+        RemoteIOConnection * ioc = new RemoteIOConnection(0, this);
+        QIODevice * dev = ioc->iodevice();
+        connect(dev, SIGNAL(readyRead()), this ,SLOT(testRR()));
+        createParallelConnection(conn, ioc, "FILE_REQUEST_KEY:1");
+        */
+    }
+
+
     /*
     foreach(ProxyConnection * pc, m_proxyconnections)
     {
@@ -72,6 +117,20 @@ void Servent::registerControlConnection(ControlConnection * conn)
         conn->sendMsg(msg);
     }
     */
+}
+
+void Servent::testRR()
+{
+    QIODevice * dev = (QIODevice*)sender();
+    //RemoteCollection * c = (RemoteCollection*)sender();
+    // TESTING: init a file transfer
+    //qDebug() << "Init a file transfer as a test:";
+    //QIODevice * dev = c->getTrack(1);
+    int ba = dev->bytesAvailable();
+    qDebug() << "Bytes available: " << ba;
+    if(ba==0) return;
+    QByteArray bytes = dev->readAll();//dev->readAll(); // read(ba);
+    qDebug() << "dev->readAll(): " << bytes.length();
 }
 
 void Servent::unregisterControlConnection(ControlConnection * conn)
@@ -102,6 +161,7 @@ void Servent::incomingConnection(int sd)
 
 void Servent::readyRead()
 {
+    qDebug() << "readyReady()";
     QTcpSocketExtra * sock = (QTcpSocketExtra*)sender();
     if(sock->_disowned)
     {
@@ -370,12 +430,23 @@ void Servent::unregisterProxyConnection()
 
 void Servent::advertiseCollection()
 {
+    /*
     RemoteCollectionConnection * rcconn = (RemoteCollectionConnection*)sender();
     RemoteCollection * rc = rcconn->remoteCollection();
     // advertise this daap port:
     BonjourRecord rec(QString("conjist:%1").arg(rcconn->name()),
                       QLatin1String("_daap._tcp"), QString());
     m_bonjourregister->registerService(rec, rc->port());
+*/
+
+    //if(!m_controlconnections.at(0)->outbound()) return;
+        
+    // TESTING: init a file transfer
+//    qDebug() << "Init a file transfer as a test:";
+  //  RemoteIOConnection * ioc = new RemoteIOConnection(0, this);
+    //QIODevice * dev = ioc->iodevice();
+  //  connect(dev, SIGNAL(readyRead()), this ,SLOT(testRR()));
+   // createParallelConnection(m_controlconnections.at(0), ioc, "FILE_REQUEST_KEY:1");
 }
 
 // debug stuff:

@@ -20,8 +20,6 @@ HEADERS += servent.h \
     zeroconf/bonjourserviceresolver.h \
     library/library.h \
     library/scanner.h \
-    collection.h \ #qdaap
-    httpd.h \ #qdaap
     conjist.h \
     jabberclient.h \
     portfwd.h \
@@ -50,27 +48,34 @@ SOURCES += servent.cpp \
     remotecollection.cpp \
     remotecollectionconnection.cpp \
     remoteioconnection.cpp
-LIBPATH += ../qxmpp/
-LIBPATH += ../miniupnp/
-LIBPATH += ../qdaapd/
-INCLUDEPATH += ../qxmpp/
-INCLUDEPATH += ../miniupnp/
-INCLUDEPATH += ../qdaapd/
-INCLUDEPATH += ../qdaapd/daaplib/include/
-INCLUDEPATH += /usr/include/taglib/
-LIBS += -L/usr/local/lib \
-    -lqjson \
-    -lQXmppClient \
-    -lminiupnp \
-    -ltag \
-    -lqdaapd
 
-# don't link to dnssd on OSX (un tested qmake incantation)
-# !macx{
-# LIBS += -ldnssd
-# }
-# Add your path to bonjour here.
-# LIBPATH=C:/...
-# INCLUDEPATH += c:/...
-# unix:LIBS += -ldns_sd
+# qdaapd library installation, see http://github.com/RJ/qdaapd
+LIBPATH += ../../qdaapd/
+INCLUDEPATH += ../../qdaapd/include
+LIBS += -lqdaapd
+
+# QXMPP (overly simple xmpp lib, will replace at some point)
+LIBPATH += ../qxmpp/
+INCLUDEPATH += ../qxmpp/
+LIBS += -lQXmppClient
+
+# Talks UPnP to set up port fwds on your router
+LIBPATH += ../miniupnp/
+INCLUDEPATH += ../miniupnp/
+LIBS += -lminiupnp
+
+# Taglib reads ID3 and other audio file metadata (use distro pkg)
+INCLUDEPATH += /usr/include/taglib/
+LIBS += -ltag
+
+# QJson (use distro pkg)
+LIBS += -lqjson
+
+LIBS += -L/usr/local/lib
+
+# TODO *don't* link to this on OSX, it's not needed:
+# (don't know the qmake syntax for excluding on macs)
 LIBS += -ldns_sd
+
+
+
