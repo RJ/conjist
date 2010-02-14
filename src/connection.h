@@ -30,7 +30,7 @@ public:
     virtual ~Connection();
     virtual Connection * clone() = 0;
 
-    void start();
+
     virtual QString id() const;
     void setFirstMessage(QVariantMap m);
     QString firstMessage() const { return m_firstmsg; };
@@ -55,8 +55,10 @@ public:
     bool onceOnly() const { return m_onceonly; };
 
     bool isReady() const { return m_ready; } ;
+    void start();
 
 protected:
+
     virtual void handleMsg(QByteArray msg);
     virtual void setup(){};
 
@@ -67,13 +69,16 @@ signals:
 
 public slots:
     void sendMsg(QByteArray);
-    void shutdown();
+    void shutdown(bool waitUntilSentAll = false);
 
 
 
 private slots:
+    void socketDisconnected();
     void readyRead();
-    //void run_real();
+    void doSetup();
+    void authCheckTimeout();
+    void bytesWritten(qint64);
 
 protected:
     QTcpSocket* m_sock;
@@ -85,6 +90,11 @@ protected:
     bool m_outbound, m_ready, m_onceonly;
     QByteArray m_firstmsg;
     QString m_name;
+
+private:
+    void actualShutdown();
+    bool m_do_shutdown;
+    qint64 m_totalsend_actual, m_totalsend_requested;
 };
 
 #endif // CONNECTION_H

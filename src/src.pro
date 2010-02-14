@@ -28,7 +28,10 @@ HEADERS += servent.h \
     remotecollection.h \
     remotecollectionconnection.h \
     remoteioconnection.h \
-    remoteiodevice.h
+    remoteiodevice.h \
+    qxtpipe.h \
+    qxtpipe_p.h
+
 SOURCES += servent.cpp \
     connection.cpp \
     main.cpp \
@@ -47,7 +50,8 @@ SOURCES += servent.cpp \
     getopt_helper.cpp \
     remotecollection.cpp \
     remotecollectionconnection.cpp \
-    remoteioconnection.cpp
+    remoteioconnection.cpp \
+    qxtpipe.cpp
 
 # qdaapd library installation, see http://github.com/RJ/qdaapd
 LIBPATH += ../../qdaapd/

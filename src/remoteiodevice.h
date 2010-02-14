@@ -13,7 +13,7 @@ class RemoteIODevice : public QIODevice
 public:
 
     RemoteIODevice() :
-            m_eof(false)
+            m_eof(false), m_totalAdded(0)
     {};
 
     virtual bool open ( OpenMode mode )
@@ -28,6 +28,7 @@ public:
 
     virtual bool isSequential () const { return true; };
 
+    /*
     virtual bool waitForReadyRead(int msecs)
     {
 
@@ -42,6 +43,7 @@ public:
         qDebug() << "UNLOCKED";
         return true;
     };
+    */
 
     virtual bool atEnd() const { return m_eof && m_buffer.length() == 0; };
 
@@ -49,9 +51,9 @@ public slots:
 
     void addData(QByteArray msg)
     {
-        qDebug() << "RemIO::addData (trying..)";
+        //qDebug() << "RemIO::addData (trying..)";
         m_mut_recv.lock();
-        qDebug() << "RemIO::addData (got lock) numbytes:" << msg.length();
+        //qDebug() << "RemIO::addData (got lock) numbytes:" << msg.length();
         if(msg.length()==0)
         {
             m_eof=true;
@@ -63,9 +65,9 @@ public slots:
         else
         {
             m_buffer.append(msg);
+            m_totalAdded += msg.length();
+            qDebug() << "RemoteIODevice has seen in total: " << m_totalAdded ;
             m_mut_recv.unlock();
-            qDebug() << "WAKE ALL - just added bytes to dev: " << msg.length();
-            //emit bytesWritten(msg.length());
             m_wait.wakeAll();
             emit readyRead();
             return;
@@ -82,7 +84,7 @@ protected:
 
     virtual qint64 readData ( char * data, qint64 maxSize )
     {
-        qDebug() << "RemIO::readData, bytes in buffer: " << m_buffer.length();
+        //qDebug() << "RemIO::readData, bytes in buffer: " << m_buffer.length();
         m_mut_recv.lock();
         if(m_eof && m_buffer.length() == 0)
         {
@@ -93,7 +95,7 @@ protected:
         }
         if(!m_buffer.length())// return 0;
         {
-            qDebug() << "WARNING readData when buffer is empty";
+            //qDebug() << "WARNING readData when buffer is empty";
             m_mut_recv.unlock();
             return 0;
         }
@@ -117,5 +119,6 @@ private:
     QMutex m_mut_wait, m_mut_recv;
     QWaitCondition m_wait;
     bool m_eof;
+    int m_totalAdded;
 };
 #endif // REMOTEIODEVICE_H

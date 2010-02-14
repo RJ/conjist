@@ -32,10 +32,22 @@ class QTcpSocketExtra : public QTcpSocket
 {
     Q_OBJECT
 public:
+    QTcpSocketExtra() : QTcpSocket()
+    {
+        QTimer::singleShot(5000, this, SLOT(authTimeout())) ;
+    };
     quint32 _bs;
     Connection * _conn;
     bool _outbound;
     bool _disowned;
+
+private slots:
+    void authTimeout()
+    {
+      if(_disowned) return;
+      qDebug() << "Connection timed out before providing a valid offer-key";
+      this->disconnectFromHost();
+    };
 };
 
 class Servent : public QTcpServer
@@ -72,6 +84,7 @@ public slots:
     void socketError(QAbstractSocket::SocketError);
     void socketConnected();
 
+    void saySomething() { qDebug() << "SAY SOMETHING"; };
     //void debug_handleLine(QString line);
     //void debug_failed();
     //void debug_connected();

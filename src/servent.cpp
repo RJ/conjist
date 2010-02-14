@@ -1,3 +1,5 @@
+#include <QTime>
+
 #include "servent.h"
 #include "controlconnection.h"
 #include "proxylistener.h"
@@ -30,6 +32,9 @@ Servent::Servent(QHostAddress ha, int port, QObject *parent) :
     m_bonjourregister = new BonjourServiceRegister(this);
 
     m_bonjourbrowser->browseForServiceType(QLatin1String("_daap._tcp"));
+
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+    //QTimer::singleShot(0, this, SLOT(saySomething()));
 }
 
 void Servent::setExternalAddress(QHostAddress ha, int port)
@@ -47,19 +52,23 @@ void Servent::registerRemoteCollectionConnection(RemoteCollectionConnection * co
 {
     m_remotecollectionconnections.append(conn);
 
-    int port = qrand() % 50000 + 10000; //TODO
-
-    qDebug() << "RemoteCollection registered: " << conn->name() << " numtracks: " << conn->remoteCollection()->numTracks()
-             << ", listening and advertising on DAAP PORT " << port;
-
+    qDebug() << "RemoteCollection registered: " << conn->name() << " numtracks: " << conn->remoteCollection()->numTracks();
 
     if(!conn->outbound()) return;
 
-    new QDaap::QDAAPd(conn->remoteCollection(), port);
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+    int port = qrand() % 50000 + 10000; //TODO
+    qDebug() << "Remote Collection listening and advertising on DAAP PORT " << port;
+    QDaap::QDAAPd * dd = new QDaap::QDAAPd(conn->remoteCollection(), port);
+    connect(conn, SIGNAL(finished()), dd, SLOT(deleteLater()));
     // advertise this daap port:
     BonjourRecord rec(QString("conjist:%1").arg(conn->name()),
                       QLatin1String("_daap._tcp"), QString());
     m_bonjourregister->registerService(rec, port);
+
+    //qDebug() << "TESTTTTTTTTTTTTT";
+    //QIODevice *  dev = conn->remoteCollection()->getTrackIODevice(1);
+
 
 }
 
@@ -155,7 +164,6 @@ void Servent::incomingConnection(int sd)
     }
     connect(sock, SIGNAL(readyRead()), this, SLOT(readyRead()));
     connect(sock, SIGNAL(disconnected()), sock, SLOT(deleteLater()));
-    // TODO timeout the delete/close sock if not takenover by a conn
     qDebug() << "connection accepted.";
 }
 
@@ -244,6 +252,7 @@ closeconnection:
 // new_conn is responsible for sending the first msg, if needed
 void Servent::createParallelConnection(Connection * orig_conn, Connection * new_conn, QString key)
 {
+    qDebug() << "Servent::createParallelConnection, key:" << key;
     // if we can connect to them directly:
     if( orig_conn->outbound() )
     {
@@ -262,10 +271,12 @@ void Servent::createParallelConnection(Connection * orig_conn, Connection * new_
     }
 }
 
+/// for outbound connectiona
 void Servent::socketConnected()
 {
     qDebug() << "Servent::SocketConnected";
     QTcpSocketExtra * sock = (QTcpSocketExtra*)sender();
+    disconnect(sock, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
     Connection * conn = sock->_conn;
     sock->_disowned = true;
     conn->setOutbound(sock->_outbound);
@@ -277,11 +288,20 @@ void Servent::socketConnected()
 
 void Servent::socketError(QAbstractSocket::SocketError e)
 {
-    qDebug() << "Servent::SocketError: " << e;
     QTcpSocketExtra * sock = (QTcpSocketExtra*)sender();
+    if(!sock)
+    {
+        qDebug() << "SocketError, sock is null";
+        return;
+    }
     Connection * conn = sock->_conn;
-    conn->takeSocket((QTcpSocket*)sock); // so sock gets deleted by COnnection
-    conn->markAsFailed(); // will emit failure signal, then delete itself
+    qDebug() << "Servent::SocketError: " << e << " " << conn->id();
+    if(!sock->_disowned)
+    {
+        conn->takeSocket((QTcpSocket*)sock); // so sock gets deleted by Connection
+        conn->markAsFailed(); // will emit failure signal, then delete itself
+    }
+    //conn->markAsFailed(); // will emit failure signal, then delete itself
 }
 
 void Servent::connectToPeer(QHostAddress ha, int port, Connection * conn, QString key)
@@ -300,9 +320,10 @@ void Servent::connectToPeer(QHostAddress ha, int port, Connection * conn, QStrin
     sock->_conn = conn;
     sock->_outbound = true;
     connect(sock, SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(sock, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(sock, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
     sock->connectToHost(ha, port, QTcpSocket::ReadWrite);
-    qDebug() << "tried to conectToHost";
+    qDebug() << "tried to connectToHost (waiting on a connected signal)";
+    QTimer::singleShot(0, this, SLOT(saySomething()));
 }
 
 void Servent::reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey)

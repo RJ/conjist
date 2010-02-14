@@ -11,13 +11,13 @@
 conjist::conjist(int argc, char *argv[])
     : QCoreApplication(argc, argv), m_go(argc,argv), m_servent(0), m_externalPort(0), m_port(CONJISTPORT)
 {
-    qsrand(QTime(0,0,0).secsTo(QTime::currentTime())); // for uuid generator
     // do the setup once event loop started, so we can call exit() correctly
     QTimer::singleShot(0, this, SLOT(setup()));
 }
 
 void conjist::setup()
 {
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
     setupLibrary();
 
     QString domain, username, password, server, sport, slport;

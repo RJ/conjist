@@ -33,15 +33,13 @@ QIODevice * RemoteCollection::getTrackIODevice(quint32 id)
         qDebug() << "m_tracks DOES NOT CONTAIN id " << id;
         return 0;
     }
-    //QFile * f = new QFile("/tmp/test.mp3");
-    //return f;
 
     //return new QFile("/tmp/test.mp3");
 
 
     //QDaap::Track t = m_tracks[id];
     RemoteIOConnection * ioc = new RemoteIOConnection(0, m_servent);
-    ioc->moveToThread(m_servent->thread());
+    //ioc->moveToThread(m_servent->thread());
     // magic offer key that will serve up the track (doesn't need to be pre-registered):
     m_servent->createParallelConnection(m_rcconn->cc(), ioc, QString("FILE_REQUEST_KEY:%1").arg(id));
     return ioc->iodevice();

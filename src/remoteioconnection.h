@@ -10,6 +10,7 @@
 #include "conjist.h"
 
 #include "remoteiodevice.h"
+#include "qxtpipe.h"
 
 class RemoteIOConnection : public Connection
 {
@@ -19,25 +20,35 @@ public:
         : Connection(s), m_fid(fid), m_servent(s)
     {
         //setName(QString("%1[%2]").arg(conn->name()).arg(fid));
+        //m_dev = new QxtPipe();
         m_dev = new RemoteIODevice();
-        qDebug() << "CTOR RemoteIOConnection" ;
+        qDebug() << "CTOR " << id() ;
     };
 
     ~RemoteIOConnection()
     {
-        qDebug() << "DTOR RemoteIOConnection" ;
+        qDebug() << "DTOR " << id() ;
     };
+
+    QString id() const { return QString("RemoteIOConnection[%1]").arg(m_fid); };
 
     RemoteIODevice * iodevice() { return m_dev; };
 
+
+    void shutdown(bool wait = false)
+    {
+        if(!wait) 
+        {
+            Connection::shutdown();
+            return;
+        }
+        qDebug() << id() << " shutdown requested - waiting until we've received all data TODO";
+
+    };
+
     void setup()
     {
-        qDebug() << "no setup needed in remioconnection";
-        QTimer::singleShot(1000, this, SLOT(writeStuff()));
-        QTimer::singleShot(2000, this, SLOT(writeStuff()));
-        QTimer::singleShot(3000, this, SLOT(writeStuff()));
-        QTimer::singleShot(4000, this, SLOT(writeStuff()));
-        return;
+
 
         qDebug() << "RemoteIOConnection::setup";
         if(m_fid)
@@ -48,27 +59,15 @@ public:
             Q_ASSERT(!t.isEmpty()); // TODO
             QString url = t.value("url").toString().remove(QRegExp("^file://"));
             qDebug() << "Opening " << url;
-            QFile f(url);
-            f.open(QIODevice::ReadOnly);
-            if(f.isReadable())
-            {
-                char buf[4096];
-                int i=0;
-                while((i=f.read((char*)&buf, 4096))>0)
-                {
-                    qDebug() << "sending data msg";
-                    sendMsg(QByteArray((char*)&buf, i));
-                }
-                sendMsg(QByteArray(""));
-            }
-            else
+            m_readdev = new QFile(url);
+            m_readdev->open(QIODevice::ReadOnly);
+            if(!m_readdev->isOpen())
             {
                 qDebug() << "WARNING file is not readable :/";
                 shutdown();
             }
-            // can't close it, not all data flushed down socket.
-            // rely on other end to close it for us.
-            //shutdown(); // close connection, we've sent the file.
+            // send chunks within our event loop, since we're not in our own thread
+            sendSome();
         }
         else
         {
@@ -80,13 +79,13 @@ public:
     void handleMsg(QByteArray msg)
     {
         Q_ASSERT(m_fid == 0); // only one end sends!
-        qDebug() << "got data msg, size " << msg.length();
+        //qDebug() << "got data msg, size " << msg.length();
         m_dev->addData(msg);
         //
         if(msg.length() == 0)
         {
-            qDebug() << "Closing connection, file transfer complete.";
-            shutdown();
+            //qDebug() << "Closing connection, file transfer complete.";
+            //shutdown();
         }
     };
 
@@ -96,17 +95,27 @@ public:
 signals:
 
 private slots:
-    void writeStuff()
+    void sendSome()
     {
-        qDebug() << "Writing 5 bytes of stuff";
-        m_dev->addData(QByteArray("XXXXX"));
+        if(m_readdev->atEnd())
+        {
+            qDebug() << "Sent all. DONE";
+            shutdown(true);
+            return;
+        }
+        QByteArray ba = m_readdev->read(4096);
+        qDebug() << "Sending " << ba.length() << " bytes of audiofile";
+        sendMsg(ba);
+        QTimer::singleShot(0, this, SLOT(sendSome()));
     };
 
 
 private:
+    QIODevice * m_readdev;
     int m_fid;
     Servent * m_servent;
     RemoteIODevice * m_dev;
+    //QxtPipe * m_dev;
 
 };
 
