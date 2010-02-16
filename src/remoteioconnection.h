@@ -10,7 +10,6 @@
 #include "conjist.h"
 
 #include "remoteiodevice.h"
-#include "qxtpipe.h"
 
 class RemoteIOConnection : public Connection
 {
@@ -37,9 +36,9 @@ public:
 
     void shutdown(bool wait = false)
     {
-        if(!wait) 
+        if(!wait)
         {
-            Connection::shutdown();
+            Connection::shutdown(wait);
             return;
         }
         qDebug() << id() << " shutdown requested - waiting until we've received all data TODO";
@@ -104,7 +103,7 @@ private slots:
             return;
         }
         QByteArray ba = m_readdev->read(4096);
-        qDebug() << "Sending " << ba.length() << " bytes of audiofile";
+        //qDebug() << "Sending " << ba.length() << " bytes of audiofile";
         sendMsg(ba);
         QTimer::singleShot(0, this, SLOT(sendSome()));
     };

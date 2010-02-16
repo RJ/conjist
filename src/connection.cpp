@@ -46,14 +46,10 @@ void Connection::actualShutdown()
     qDebug() << "Conn " << id() << " actualShutdown()";
     if(m_sock && m_sock->isOpen())
     {
-        //connect(m_sock, SIGNAL(disconnected()), this, SLOT(deleteLater()));
         m_sock->disconnectFromHost();
     }
-    //quit();
-    //m_sock->deleteLater();
     emit finished();
     deleteLater();
-    //if(this->isRunning()) QThread::exit(0);
 }
 
 void Connection::takeSocket(QTcpSocket * sock)
@@ -192,6 +188,6 @@ void Connection::handleMsg(QByteArray  msg )
 void Connection::bytesWritten(qint64 i)
 {
     m_totalsend_actual += i;
-    qDebug() << "Connection - sent: " << m_totalsend_actual << " of: " << m_totalsend_requested;
+    //qDebug() << "Connection - sent: " << m_totalsend_actual << " of: " << m_totalsend_requested;
     if(m_do_shutdown && m_totalsend_actual == m_totalsend_requested) actualShutdown();
 }

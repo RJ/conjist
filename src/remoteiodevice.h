@@ -32,7 +32,6 @@ public:
     virtual bool waitForReadyRead(int msecs)
     {
 
-        qDebug() << "GOTLOCK";
         m_mut_wait.lock();
         if(m_buffer.length() == 0)
         {
@@ -40,7 +39,6 @@ public:
             m_wait.wait(&m_mut_wait);
         }
         m_mut_wait.unlock();
-        qDebug() << "UNLOCKED";
         return true;
     };
     */
@@ -51,13 +49,11 @@ public slots:
 
     void addData(QByteArray msg)
     {
-        //qDebug() << "RemIO::addData (trying..)";
         m_mut_recv.lock();
-        //qDebug() << "RemIO::addData (got lock) numbytes:" << msg.length();
         if(msg.length()==0)
         {
             m_eof=true;
-            qDebug() << "addData finished, entire file received. EOF.";
+            //qDebug() << "addData finished, entire file received. EOF.";
             m_mut_recv.unlock();
             m_wait.wakeAll();
             return;
@@ -66,7 +62,7 @@ public slots:
         {
             m_buffer.append(msg);
             m_totalAdded += msg.length();
-            qDebug() << "RemoteIODevice has seen in total: " << m_totalAdded ;
+            //qDebug() << "RemoteIODevice has seen in total: " << m_totalAdded ;
             m_mut_recv.unlock();
             m_wait.wakeAll();
             emit readyRead();
