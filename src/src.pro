@@ -10,10 +10,6 @@ TARGET = ../conjist
 HEADERS += servent.h \
     connection.h \
     controlconnection.h \
-    proxyconnection.h \
-    proxyconnectionlistener.h \
-    proxylistener.h \
-    testdriver.h \
     zeroconf/bonjourrecord.h \
     zeroconf/bonjourservicebrowser.h \
     zeroconf/bonjourserviceregister.h \
@@ -29,13 +25,9 @@ HEADERS += servent.h \
     remotecollectionconnection.h \
     remoteioconnection.h \
     remoteiodevice.h
-
 SOURCES += servent.cpp \
     connection.cpp \
     main.cpp \
-    proxyconnection.cpp \
-    proxyconnectionlistener.cpp \
-    proxylistener.cpp \
     controlconnection.cpp \
     zeroconf/bonjourservicebrowser.cpp \
     zeroconf/bonjourserviceregister.cpp \
@@ -48,7 +40,8 @@ SOURCES += servent.cpp \
     getopt_helper.cpp \
     remotecollection.cpp \
     remotecollectionconnection.cpp \
-    remoteioconnection.cpp
+    remoteioconnection.cpp \
+    remoteiodevice.cpp
 
 # qdaapd library installation, see http://github.com/RJ/qdaapd
 LIBPATH += ../../qdaapd/
@@ -71,12 +64,8 @@ LIBS += -ltag
 
 # QJson (use distro pkg)
 LIBS += -lqjson
-
 LIBS += -L/usr/local/lib
 
 # TODO *don't* link to this on OSX, it's not needed:
 # (don't know the qmake syntax for excluding on macs)
 LIBS += -ldns_sd
-
-
-

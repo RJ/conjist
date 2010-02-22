@@ -67,7 +67,6 @@ public:
 
     void connectToPeer(QHostAddress ha, int port, Connection * conn, QString key);
     void reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey);
-    void createDaapListener(ControlConnection * conn, QString key, QString name);
     void createRemoteCollection(ControlConnection * conn, QString key, QString name);
 
     void setExternalAddress(QHostAddress ha, int port);
@@ -83,12 +82,6 @@ signals:
 public slots:
     void socketError(QAbstractSocket::SocketError);
     void socketConnected();
-
-    void saySomething() { qDebug() << "SAY SOMETHING"; };
-    //void debug_handleLine(QString line);
-    //void debug_failed();
-    //void debug_connected();
-    //void debug_connected_dupe();
 
 private slots:
     void readyRead();

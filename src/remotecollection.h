@@ -2,6 +2,7 @@
 #define REMOTECOLLECTION_H
 #include <QWaitCondition>
 #include <QMutex>
+#include <QSharedPointer>
 
 #include "qdaapd/qdaapd.h"
 #include "qdaapd/collection.h"
@@ -23,7 +24,7 @@ public:
     ~RemoteCollection();
 
     virtual void loadTracks();
-    virtual QIODevice * getTrackIODevice(quint32 id);
+    virtual QSharedPointer<QIODevice> getTrackIODevice(quint32 id);
 
 signals:
 

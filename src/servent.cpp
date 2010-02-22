@@ -2,8 +2,6 @@
 
 #include "servent.h"
 #include "controlconnection.h"
-#include "proxylistener.h"
-#include "proxyconnection.h"
 #include "remotecollection.h"
 #include "remoteioconnection.h"
 #include "remotecollectionconnection.h"
@@ -34,7 +32,6 @@ Servent::Servent(QHostAddress ha, int port, QObject *parent) :
     m_bonjourbrowser->browseForServiceType(QLatin1String("_daap._tcp"));
 
     qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
-    //QTimer::singleShot(0, this, SLOT(saySomething()));
 }
 
 void Servent::setExternalAddress(QHostAddress ha, int port)
@@ -323,7 +320,6 @@ void Servent::connectToPeer(QHostAddress ha, int port, Connection * conn, QStrin
     connect(sock, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
     sock->connectToHost(ha, port, QTcpSocket::ReadWrite);
     qDebug() << "tried to connectToHost (waiting on a connected signal)";
-    QTimer::singleShot(0, this, SLOT(saySomething()));
 }
 
 void Servent::reverseOfferRequest(Connection * orig_conn, QString key, QString theirkey)
@@ -397,35 +393,8 @@ void Servent::bonjourRecordResolved(const QHostInfo &host, int port)
 
     qDebug() << "bonjourRecordResolved: " << ha.toString() << " port: " << port;
 
-    // offer to our peers:
-    /*
-    QString key = uuid();
-    ProxyConnection * proxc = new ProxyConnection(ha, port, this);
-    proxc->setName(key);
-    connect(proxc, SIGNAL(finished()), this, SLOT(unregisterProxyConnection()));
-    m_proxyconnections.append(proxc);
-
-    proxc->setOnceOnly(false);
-    registerOffer(key, proxc);
-    qDebug() << "Registered a proxyconnection using " << key;
-
-    QByteArray msg = QString("{\"method\":\"daap-offer\", \"key\":\"%1\", \"name\":\"%2\"}")
-                     .arg(key).arg(host.hostName()).toAscii();
-    foreach(ControlConnection * cc, m_controlconnections)
-    {
-        cc->sendMsg(msg);
-    }
-    */
-
 }
 
-void Servent::createDaapListener(ControlConnection * conn, QString key, QString name)
-{
-    ProxyListener * pl = new ProxyListener(this, conn, key);
-    BonjourRecord rec(QString("DAAP %1 via %2").arg(name).arg(""),
-                      QLatin1String("_daap._tcp"), QString());
-    m_bonjourregister->registerService(rec, pl->serverPort());
-}
 
 void Servent::createRemoteCollection(ControlConnection * conn, QString key, QString name)
 {
@@ -459,111 +428,5 @@ void Servent::advertiseCollection()
                       QLatin1String("_daap._tcp"), QString());
     m_bonjourregister->registerService(rec, rc->port());
 */
-
-    //if(!m_controlconnections.at(0)->outbound()) return;
-        
-    // TESTING: init a file transfer
-//    qDebug() << "Init a file transfer as a test:";
-  //  RemoteIOConnection * ioc = new RemoteIOConnection(0, this);
-    //QIODevice * dev = ioc->iodevice();
-  //  connect(dev, SIGNAL(readyRead()), this ,SLOT(testRR()));
-   // createParallelConnection(m_controlconnections.at(0), ioc, "FILE_REQUEST_KEY:1");
 }
-
-// debug stuff:
-
-
-/*
-
-
-void Servent::debug_handleLine(QString line)
-{
-    qDebug() << "Servent handling line " << line;
-    QStringList list = line.split(" ");
-    if(list.length()==0) return;
-
-    if(list.value(0) == "connect" && list.length() == 4)
-    {
-        ControlConnection * c = new ControlConnection(this);
-        c->setName("normal");
-        connect(c, SIGNAL(ready()), this, SLOT(debug_connected()));
-        connect(c, SIGNAL(failed()), this, SLOT(debug_failed()));
-        this->connectToPeer(QHostAddress(list.value(1)), list.value(2).toInt(), c, list.value(3));
-        return;
-    }
-
-    if(line == "connections")
-    {
-        foreach(ControlConnection * c, m_controlconnections)
-        {
-            qDebug() << "ControlConnection: " << c->id();
-        }
-
-        return;
-    }
-
-    if(line == "dupe")
-    {
-        ControlConnection * c = m_controlconnections.at(0);
-        ControlConnection * cnew = new ControlConnection(this);
-        cnew->setName("dupeof-"+c->id());
-        connect(cnew, SIGNAL(ready()), this, SLOT(debug_connected_dupe()));
-        connect(cnew, SIGNAL(failed()), this, SLOT(debug_failed()));
-        createParallelConnection(c, cnew, "key2");
-        return;
-    }
-
-    if(line == "proxy")
-    {
-        ControlConnection * c = m_controlconnections.at(0);
-        //ProxyListener * pl = new ProxyListener(this, c, "proxykey", 8080);
-        return;
-    }
-
-    if(list.length() == 2 && list.at(0) == "send")
-    {
-        foreach(ControlConnection * c, m_controlconnections)
-        {
-            qDebug() << "Sending to: " << c->id();
-            c->sendMsg(list.at(1).toAscii());
-        }
-        return;
-    }
-
-
-}
-
-void Servent::debug_connected()
-{
-    ControlConnection * conn = (ControlConnection*)sender();
-    qDebug() << "Connnnnnected " << conn->id();
-    conn->sendMsg(QByteArray("First post"));
-
-
-    qDebug() << "Trying to dupe this connection";
-    ControlConnection * cc = new ControlConnection(this);
-    cc->setName("dupeconn");
-    connect(cc, SIGNAL(ready()), this, SLOT(debug_connected_dupe()));
-    connect(cc, SIGNAL(failed()), this, SLOT(debug_failed()));
-    createParallelConnection(conn, cc, "key2");
-
-}
-
-void Servent::debug_connected_dupe()
-{
-    ControlConnection * conn = (ControlConnection*)sender();
-    qDebug() << "Connnnnnected  " << conn->id();
-    conn->sendMsg(QByteArray("First post"));
-    
-}
-
-void Servent::debug_failed()
-{
-    ControlConnection * conn = (ControlConnection*)sender();
-    qDebug() << "Faileddddddd " << conn->id();
-    conn->shutdown();
-}
-
-
-*/
 

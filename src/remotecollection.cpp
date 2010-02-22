@@ -25,13 +25,13 @@ void RemoteCollection::connAllTracks(QList<QDaap::Track> tracks)
     emit finishedLoading();
 }
 
-QIODevice * RemoteCollection::getTrackIODevice(quint32 id)
+QSharedPointer<QIODevice> RemoteCollection::getTrackIODevice(quint32 id)
 {
     Q_ASSERT(m_tracksloaded);
     if(!m_tracks.contains(id))
     {
         qDebug() << "m_tracks DOES NOT CONTAIN id " << id;
-        return 0;
+        return QSharedPointer<QIODevice>();
     }
 
     //return new QFile("/tmp/test.mp3");
@@ -43,4 +43,5 @@ QIODevice * RemoteCollection::getTrackIODevice(quint32 id)
     // magic offer key that will serve up the track (doesn't need to be pre-registered):
     m_servent->createParallelConnection(m_rcconn->cc(), ioc, QString("FILE_REQUEST_KEY:%1").arg(id));
     return ioc->iodevice();
+    //return static_cast< QSharedPointer<QIODevice> >(ioc->iodevice());
 };

@@ -1,5 +1,4 @@
 #include "controlconnection.h"
-#include "proxylistener.h"
 
 ControlConnection::ControlConnection(Servent *parent) :
     Connection(parent)
@@ -38,12 +37,6 @@ void ControlConnection::handleMsg(QByteArray msg)
             QString theirkey = m["key"].toString();
             QString ourkey   = m["offer"].toString();
             servent()->reverseOfferRequest(this, ourkey, theirkey);
-        }
-        else if(m.value("method").toString() == "daap-offer")
-        {
-            QString key = m["key"].toString();
-            QString name= m["name"].toString();
-            m_servent->createDaapListener(this, key, name);
         }
         else if(m.value("method").toString() == "library-offer")
         {
